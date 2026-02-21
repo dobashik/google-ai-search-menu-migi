@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Google AI検索 - 右クリックで「とは」検索",
-  "version": "1.1.0",
-  "description": "選択したテキストに「とは」を付けてGoogle検索を新しいタブで開きます",
+  "version": "1.2.0",
+  "description": "選択したテキストに「とは」を付けてGoogle AI検索をシークレットモードで開きます",
+  "incognito": "spanning",
   "minimum_chrome_version": "110",
   "permissions": [
     "contextMenus"

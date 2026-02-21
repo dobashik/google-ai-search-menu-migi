@@ -63,6 +63,8 @@ function isAllowedUrl(url) {
 function buildSearchUrl(query) {
   const searchUrl = new URL("/search", ALLOWED_ORIGIN);
   searchUrl.searchParams.set("q", query + "とは");
+  // AI モードで開く（udm=50）
+  searchUrl.searchParams.set("udm", "50");
 
   const urlString = searchUrl.toString();
 
@@ -114,9 +116,10 @@ chrome.contextMenus.onClicked.addListener((info) => {
     return;
   }
 
-  chrome.tabs.create({ url }, () => {
+  // シークレットモードで新しいウィンドウを開く
+  chrome.windows.create({ url, incognito: true }, () => {
     if (chrome.runtime.lastError) {
-      console.error("Failed to create tab:", chrome.runtime.lastError.message);
+      console.error("Failed to create incognito window:", chrome.runtime.lastError.message);
     }
   });
 });
