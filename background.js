@@ -78,11 +78,19 @@ function buildSearchUrl(query) {
 
 /**
  * シークレットモードで URL を開く
- * - 既存のシークレットウィンドウがあれば、そこに新しいタブで開く
- * - なければ新しいシークレットウィンドウを作成する
+ * - 右クリック元がシークレットウィンドウなら、同じウィンドウに新しいタブで開く
+ * - 通常ウィンドウからの場合、既存のシークレットウィンドウを探してそこに開く
+ * - シークレットウィンドウがどこにもなければ新規作成
  */
-async function openInIncognito(url) {
+async function openInIncognito(url, sourceTab) {
   try {
+    // 右クリック元が既にシークレットウィンドウの場合 → 同じウィンドウに新しいタブ
+    if (sourceTab && sourceTab.incognito) {
+      await chrome.tabs.create({ windowId: sourceTab.windowId, url });
+      return;
+    }
+
+    // 通常ウィンドウからの場合 → 既存のシークレットウィンドウを探す
     const allWindows = await chrome.windows.getAll({ windowTypes: ["normal"] });
     const incognitoWindow = allWindows.find((w) => w.incognito);
 
@@ -123,8 +131,8 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-// クリックハンドラ
-chrome.contextMenus.onClicked.addListener((info) => {
+// クリックハンドラ（第2引数 tab で右クリック元のタブ情報を取得）
+chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId !== MENU_ID) {
     return;
   }
@@ -141,5 +149,5 @@ chrome.contextMenus.onClicked.addListener((info) => {
   }
 
   // 既存のシークレットウィンドウがあればそこに新しいタブを開く、なければ新規作成
-  openInIncognito(url);
+  openInIncognito(url, tab);
 });
