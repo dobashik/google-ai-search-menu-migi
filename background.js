@@ -76,6 +76,30 @@ function buildSearchUrl(query) {
   return urlString;
 }
 
+/**
+ * シークレットモードで URL を開く
+ * - 既存のシークレットウィンドウがあれば、そこに新しいタブで開く
+ * - なければ新しいシークレットウィンドウを作成する
+ */
+async function openInIncognito(url) {
+  try {
+    const allWindows = await chrome.windows.getAll({ windowTypes: ["normal"] });
+    const incognitoWindow = allWindows.find((w) => w.incognito);
+
+    if (incognitoWindow) {
+      // 既存のシークレットウィンドウに新しいタブを開く
+      await chrome.tabs.create({ windowId: incognitoWindow.id, url });
+      // そのウィンドウを前面に持ってくる
+      await chrome.windows.update(incognitoWindow.id, { focused: true });
+    } else {
+      // シークレットウィンドウがなければ新規作成
+      await chrome.windows.create({ url, incognito: true });
+    }
+  } catch (err) {
+    console.error("Failed to open in incognito:", err.message);
+  }
+}
+
 // コンテキストメニュー登録
 chrome.runtime.onInstalled.addListener(() => {
   // 既存メニューを一旦全削除してから再作成（重複防止）
@@ -116,10 +140,6 @@ chrome.contextMenus.onClicked.addListener((info) => {
     return;
   }
 
-  // シークレットモードで新しいウィンドウを開く
-  chrome.windows.create({ url, incognito: true }, () => {
-    if (chrome.runtime.lastError) {
-      console.error("Failed to create incognito window:", chrome.runtime.lastError.message);
-    }
-  });
+  // 既存のシークレットウィンドウがあればそこに新しいタブを開く、なければ新規作成
+  openInIncognito(url);
 });
